@@ -103,6 +103,7 @@ public class Function {
      */
     public static boolean isPrime(int value) {
         return new BigInteger(String.valueOf(value)).isProbablePrime(100);
+//    	      return true;
     }
 
     /**

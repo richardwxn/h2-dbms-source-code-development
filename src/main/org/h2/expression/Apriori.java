@@ -6,8 +6,12 @@ import java.io.FileWriter;
 import java.io.IOException;
 import java.io.InputStreamReader;
 import java.lang.Object;
+import java.util.ArrayList;
 import java.util.Date;
+import java.util.HashSet;
+import java.util.List;
 import java.util.Observable;
+import java.util.Set;
 import java.util.StringTokenizer;
 import java.util.Vector;
 import java.io.*;
@@ -38,13 +42,19 @@ public class Apriori extends Observable {
  
  
     public static void main(String[] args) throws Exception {
-        Apriori ap = new Apriori("1 2 3 4"+"\n"+"2 3 4 5"+"\n"+"1 2 3 4"+"\n");
+        Apriori ap = new Apriori("v ab c d "+"\n"
+        					+"ab beg ae "+"\n"
+        					+"x bc af "+"\n"
+        					+"z ab g "+"\n"
+        					+"w abc i "+"\n"
+        					 );
     }
  
     /** the list of scurrent itemsets */
     public String aa="";
-    public ArrayList<String> shit=new ArrayList<String>();
-    private List<int[]> itemsets ;
+    public HashSet<String> nima=new HashSet<String>();
+    public ArrayList<String[]> shit=new ArrayList<String[]>();
+    public ArrayList<String[]> itemsets ;
     /** the name of the transcation file */
     private String transaFile; 
     /** number of different items in the dataset */
@@ -80,13 +90,20 @@ public class Apriori extends Observable {
     {
         configure(input);
         go(input);
-        aa=shit.get(shit.size()-1);
-        for(int i=shit.size()-2;i>=0;i--){
-        	if(shit.get(i).length()==shit.get(shit.size()-1).length()){
-        		aa=aa+shit.get(i);
+        aa=Arrays.toString(shit.get(shit.size()-1));
+        for(int i=shit.size()-2;i>0;i--){
+ 
+        	if(shit.get(i).length==shit.get(shit.size()-1).length){
+        		aa=aa+(Arrays.toString(shit.get(i)));
+        	}
+       	if(shit.get(i).length!=shit.get(i-1).length){
+        		break;
         	}
         }
-        System.out.print("output:"+aa);
+//        for(int i=0;i<shit.size();i++){
+//        System.out.println(Arrays.toString(shit.get(i)));
+//        }
+        System.out.println("output:"+aa);
     }
  
     /** starts the algorithm after configuration */
@@ -122,7 +139,7 @@ public class Apriori extends Observable {
     }
  
     /** triggers actions if a frequent item set has been found  */
-    private void foundFrequentItemSet(int[] itemset, int support) {
+    private void foundFrequentItemSet(String[] itemset, int support) {
     	if (usedAsLibrary) {
             this.setChanged();
             notifyObservers(itemset);
@@ -150,7 +167,7 @@ public class Apriori extends Observable {
      // transaFile = "/Users/newuser/Desktop/data.txt"; // default
     	    String [] token=input.split("\n");
     	// setting minsupport
-     minSup = .01;// by default
+     minSup = 0.01;// by default
     	if (minSup>1 || minSup<0) throw new Exception("minSup: bad value");
     	
     	
@@ -159,6 +176,7 @@ public class Apriori extends Observable {
     	numTransactions=0;
     //	BufferedReader data_in = new BufferedReader(new FileReader(transaFile));
     	int i=0;
+ //   	System.out.println(token.length+"cao");
     	while (i<token.length) {    		
     		String line=token[i];
     		i++;
@@ -166,11 +184,12 @@ public class Apriori extends Observable {
     		numTransactions++;
     		StringTokenizer t = new StringTokenizer(line," ");
     		while (t.hasMoreTokens()) {
-    			int x = Integer.parseInt(t.nextToken());
+    			
+    			nima.add(t.nextToken());
     			//log(x);
-    			if (x+1>numItems) numItems=x+1;
+ //   			if (x+1>numItems) numItems=x+1;
     		}    		
-    		
+    		System.out.println(numItems+"nima");
     	}  
     	
         outputConfig();
@@ -189,12 +208,16 @@ public class Apriori extends Observable {
 	 * i.e. all possibles items of the datasets
 	 */
 	private void createItemsetsOfSize1() {
-		itemsets = new ArrayList<int[]>();
-        for(int i=0; i<numItems; i++)
-        {
-        	int[] cand = {i};
+		itemsets = new ArrayList<String []>();
+ 
+        	Iterator ssbb=nima.iterator();
+        	while(ssbb.hasNext()){
+        	String[] cand = {(String) ssbb.next()};
         	itemsets.add(cand);
-        }
+        	numItems++;
+        	}
+        	numItems++;
+        
 	}
 			
     /**
@@ -206,24 +229,28 @@ public class Apriori extends Observable {
     {
     	// by construction, all existing itemsets have the same size
     	int currentSizeOfItemsets = itemsets.get(0).length;
+    	int currentsizeofarraylist=itemsets.size();
     	log("Creating itemsets of size "+(currentSizeOfItemsets+1)+" based on "+itemsets.size()+" itemsets of size "+currentSizeOfItemsets);
     		
     	HashMap<String, int[]> tempCandidates = new HashMap<String, int[]>(); //temporary candidates
-    	
+    	 HashSet<ArrayList<String>> newCand=new HashSet<ArrayList<String>>();
         // compare each pair of itemsets of size n-1
+    	 int k=0;
         for(int i=0; i<itemsets.size(); i++)
         {
             for(int j=i+1; j<itemsets.size(); j++)
             {
-                int[] X = itemsets.get(i);
-                int[] Y = itemsets.get(j);
- 
+                String[] X = itemsets.get(i);
+                String[] Y = itemsets.get(j);
+                	ArrayList<String> target=new ArrayList<String>();
                 assert (X.length==Y.length);
                 
                 //make a string of the first n-2 tokens of the strings
-                int [] newCand = new int[currentSizeOfItemsets+1];
-                for(int s=0; s<newCand.length-1; s++) {
-                	newCand[s] = X[s];
+               
+        //        String [] newCand = new String[currentSizeOfItemsets+1];
+                for(int s=0; s<=X.length-1; s++) {
+//                	newCand.add(i,X);
+                	target.add(X[s]);
                 }
                     
                 int ndifferent = 0;
@@ -241,27 +268,46 @@ public class Apriori extends Observable {
                 	if (!found){ // Y[s1] is not in X
                 		ndifferent++;
                 		// we put the missing value at the end of newCand
-                		newCand[newCand.length -1] = Y[s1];
+//                		newCand.add(newCand.size() -1,Y);
+                		target.add(Y[s1]);
+                		 Collections.sort(target);
+                		
                 	}
-            	
+                	
             	}
+             
+                newCand.add(target);
                 
                 // we have to find at least 1 different, otherwise it means that we have two times the same set in the existing candidates
                 assert(ndifferent>0);
                 
-                
-                if (ndifferent==1) {
-                    // HashMap does not have the correct "equals" for int[] :-(
-                    // I have to create the hash myself using a String :-(
-                	// I use Arrays.toString to reuse equals and hashcode of String
-                	Arrays.sort(newCand);
-                	tempCandidates.put(Arrays.toString(newCand),newCand);
-                }
             }
         }
         
+//        for(int i=0;i<newCand.size()-1;i++){
+//        		for(int j=i+1;j<newCand.size();j++){
+//        			if(Arrays.equals(newCand.get(j),newCand.get(i))){
+//        				newCand.remove(j);
+//        			}
+//        		}
+//        }
         //set the new itemsets
-        itemsets = new ArrayList<int[]>(tempCandidates.values());
+//        itemsets = new ArrayList<String[]>(newCand);
+         Iterator <ArrayList<String>> nima=newCand.iterator();
+         itemsets=new ArrayList<String[]>();
+         while(nima.hasNext()){
+//        	String[] cao=nima.next().toArray();
+//        	itemsets.add(cao);
+        	 ArrayList<String>sss=nima.next();
+        	 String [] bb=new String[sss.size()];
+        	 System.out.println(sss.size());
+        	 	for(int i=0;i<sss.size();i++){
+        	 		bb[i]=sss.get(i);
+        	 	}
+        	 	itemsets.add(bb);
+        }
+        
+        
     	log("Created "+itemsets.size()+" unique itemsets of size "+(currentSizeOfItemsets+1));
  
     }
@@ -290,7 +336,7 @@ public class Apriori extends Observable {
     	
         log("Passing through the data to compute the frequency of " + itemsets.size()+ " itemsets of size "+itemsets.get(0).length);
  
-        List<int[]> frequentCandidates = new ArrayList<int[]>(); //the frequent candidates for the current itemset
+        ArrayList<String []> frequentCandidates = new ArrayList<String[]>(); //the frequent candidates for the current itemset
  
         boolean match; //whether the transaction has all the items in an itemset
         int count[] = new int[itemsets.size()]; //the number of successful matches, initialized by zeros
@@ -301,28 +347,46 @@ public class Apriori extends Observable {
  
 		boolean[] trans = new boolean[numItems];
 		String [] token=input.split("\n");
-		// for each transaction
+//		eliminate duplicate
+//        for(int i=0;i<itemsets.size()-1;i++){
+//    		for(int j=i+1;j<itemsets.size();j++){
+//    			if(Arrays.equals(itemsets.get(j),itemsets.get(i))){
+//    				itemsets.remove(j);
+//    			}
+//    		}
+//    }
+//		// for each transaction
 		for (int i = 0; i < numTransactions; i++) {
  
 			// boolean[] trans = extractEncoding1(data_in.readLine());
 			String line = token[i];
-			line2booleanArray(line, trans);
+			String [] tokens = line.split("\\s");
+			HashSet<String> words = new HashSet<String> ();
+			for (String t : tokens)
+				words.add(t);
+			
+//			line2booleanArray(line, trans);
  
 			// check each candidate
 			for (int c = 0; c < itemsets.size(); c++) {
 				match = true; // reset match to false
 				// tokenize the candidate so that we know what items need to be
 				// present for a match
-				int[] cand = itemsets.get(c);
+				String[] cand = itemsets.get(c);
 				//int[] cand = candidatesOptimized[c];
 				// check each item in the itemset to see if it is present in the
 				// transaction
-				for (int xx : cand) {
-					if (trans[xx] == false) {
+				
+				for (String xx : cand) {
+					
+//					if (xx==null||!line.contains(xx)) {
+					if (xx==null||!words.contains(xx)) {
 						match = false;
 						break;
 					}
+					
 				}
+				
 				if (match) { // if at this point it is a match, increase the count
 					count[c]++;
 					//log(Arrays.toString(cand)+" is contained in trans "+i+" ("+line+")");
@@ -330,7 +394,7 @@ public class Apriori extends Observable {
 			}
  
 		}
-		
+
 		
  
 		for (int i = 0; i < itemsets.size(); i++) {
@@ -345,14 +409,15 @@ public class Apriori extends Observable {
 //	    			aa=(Arrays.toString(itemsets.get(i)));
 //	    			
 //	    		}   
-				shit.add(Arrays.toString(itemsets.get(i)));
+				shit.add(itemsets.get(i));
 			/*	if(Arrays.toString(itemsets.get(i)).length()==12)		
 				System.out.print(aa);*/
 				frequentCandidates.add(itemsets.get(i));
 			}
+//			System.out.println(i);
 			//else log("-- Remove candidate: "+ Arrays.toString(candidates.get(i)) + "  is: "+ ((count[i] / (double) numTransactions)));
 		}
- 
+        
         //new candidates are only the frequent candidates
         itemsets = frequentCandidates;
     }
